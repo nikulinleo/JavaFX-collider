@@ -129,19 +129,20 @@ class CollisionHandler{
                     double
                     b1r = b1.getRadius(),
                     b2r = b2.getRadius(),
+                    b1er = b1r + 0.1,
+                    b2er = b2r + 0.1,
                     b1x = b1.coords[0],
                     b1y = b1.coords[1],
                     b2x = b2.coords[0],
                     b2y = b2.coords[1],
                     dist = Math.sqrt(Math.pow(b1x - b2x, 2) + Math.pow(b1y - b2y, 2)),
-                    shift = b1r + b2r - dist;
+                    shift = b1er + b2er - dist;
                     double[] vect = new double[]{b2x-b1x, b2y-b1y};
-                    if(shift > 0){
+                    if(b1r + b2r - dist > 0){
                         shifted = true;
                         double vectlen = Math.sqrt(vect[0]*vect[0] + vect[1]*vect[1]); 
                         vect[0] /= vectlen;
                         vect[1] /= vectlen;
-                        shift *=4;
                         if(b1.pressed){
                             b2.relocate(b2x + vect[0]*(shift), b2y + vect[1]*(shift));
                             b2.coords[0] = b2x + vect[0]*(shift);
