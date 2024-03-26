@@ -5,33 +5,37 @@ import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-/**
- * JavaFX App
- */
 public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
+
         Group group = new Group();
         Scene scene = new Scene(group, 800, 600);
         ArrayList<Ball> balls = new ArrayList<Ball>();
         CollisionHandler collider = new CollisionHandler();
+        Rectangle background = new Rectangle(0,0,800,600);
+        background.setFill(Color.WHITE);
+        group.getChildren().add(background);
 
         Ball btn = new Ball(100, 100, collider);
         group.getChildren().add(btn);
 
-        scene.setOnMouseClicked(new EventHandler<MouseEvent>() {
+        background.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                System.out.println("add new ball!");
                 Ball temp = new Ball(event.getSceneX(),event.getSceneY(),collider);
                 balls.add(temp);
-                group.getChildren().add(temp);
+                group.getChildren().add(balls.get(balls.size()-1));
             }
         });
 
@@ -45,26 +49,35 @@ public class App extends Application {
 }
 
 class Ball extends Circle {
-    boolean pressed;
-    double[] coords;
+    boolean pressed, walled;
+    double x, y;
+    double r;
+    public static final double R = 10;
     CollisionHandler collider;
     EventHandler<MouseEvent> clickHandler, dragHandler, releaseHandler;
     
     Ball(double x, double y, CollisionHandler collider){
-        super(10);
-        coords = new double[2];
-        coords[0] = x;
-        coords[1] = y;
-        this.relocate(x, y);
-        pressed = false;
-        clickHandler = new BallClickHandler(this);
-        dragHandler = new BallDragHandler(this);
-        releaseHandler = new BallReleaseHandler(this);
+        super(R);
+        this.r = R;
+        this.x = x;
+        this.y = y;
+        this.setLayoutX(x);
+        this.setLayoutY(y);
+        this.pressed = false;
+        this.walled = false;
+        this.clickHandler = new BallClickHandler(this);
+        this.dragHandler = new BallDragHandler(this);
+        this.releaseHandler = new BallReleaseHandler(this);
         this.setOnMousePressed(clickHandler);
         this.setOnMouseDragged(dragHandler);
         this.setOnMouseReleased(releaseHandler);
         collider.addBall(this);
         this.collider = collider;
+    }
+
+    void move(double x, double y){
+        this.setLayoutX(this.x = x);
+        this.setLayoutY(this.y = y);
     }
 }
 
@@ -77,9 +90,7 @@ class BallDragHandler implements EventHandler<MouseEvent>{
     
     @Override
     public void handle(MouseEvent arg0) {
-        ball.relocate(arg0.getSceneX(),arg0.getSceneY());
-        ball.coords[0] = arg0.getSceneX();
-        ball.coords[1] = arg0.getSceneY();
+        ball.move(arg0.getSceneX(),arg0.getSceneY());
         ball.collider.recompute();
     }
 }
@@ -123,74 +134,63 @@ class CollisionHandler{
         boolean shifted = true;
         while(shifted){
             shifted = false;
+
+            for(Ball b: balls){
+                double
+                br = b.r,
+                er = br + 0.1,
+                bx = b.x,
+                by = b.y;
+
+                if(bx - br < 0){
+                    shifted = true;
+                    b.move(er , by);
+                }
+                else if(bx + br > 800){
+                    shifted = true;
+                    b.move(800 - er , by);
+                }
+
+                if(by - br < 0 ){
+                    shifted = true;
+                    b.move(bx , er);
+                }
+                else if(by + br > 600){
+                    shifted = true;
+                    b.move(bx , 600 - er);
+                }
+            }
+
             for(int i = 0; i < balls.size() - 1; i++){
                 for(int j = i+1; j < balls.size(); j++){
                     Ball b1 = balls.get(i), b2 = balls.get(j);
                     double
-                    b1r = b1.getRadius(),
-                    b2r = b2.getRadius(),
+                    b1r = b1.r,
+                    b2r = b2.r,
                     b1er = b1r + 0.1,
                     b2er = b2r + 0.1,
-                    b1x = b1.coords[0],
-                    b1y = b1.coords[1],
-                    b2x = b2.coords[0],
-                    b2y = b2.coords[1],
+                    b1x = b1.x,
+                    b1y = b1.y,
+                    b2x = b2.x,
+                    b2y = b2.y,
                     dist = Math.sqrt(Math.pow(b1x - b2x, 2) + Math.pow(b1y - b2y, 2)),
                     shift = b1er + b2er - dist;
                     double[] vect = new double[]{b2x-b1x, b2y-b1y};
                     if(b1r + b2r - dist > 0){
                         shifted = true;
-                        double vectlen = Math.sqrt(vect[0]*vect[0] + vect[1]*vect[1]); 
-                        vect[0] /= vectlen;
-                        vect[1] /= vectlen;
+                        vect[0] /= dist;
+                        vect[1] /= dist;
                         if(b1.pressed){
-                            b2.relocate(b2x + vect[0]*(shift), b2y + vect[1]*(shift));
-                            b2.coords[0] = b2x + vect[0]*(shift);
-                            b2.coords[1] = b2y + vect[1]*(shift);
+                                b2.move(b2x + vect[0]*shift, b2y + vect[1]*shift);
                         }
                         else if(b2.pressed){
-                            b1.relocate(b1x - vect[0]*(shift), b1y - vect[1]*(shift));
-                            b1.coords[0] = b1x - vect[0]*(shift);
-                            b1.coords[1] = b1y - vect[1]*(shift);
+                                b1.move(b1x - vect[0]*shift, b1y - vect[1]*shift);
                         }
                         else{
-                            b1.relocate(b1x + vect[0]*(shift)/2, b1y + vect[1]*(shift)/2);
-                            b2.relocate(b2x - vect[0]*(shift)/2, b2y - vect[1]*(shift)/2);
-                            b1.coords[0] = b1x - vect[0]*(shift)/2;
-                            b1.coords[1] = b1y - vect[1]*(shift)/2; 
-                            b2.coords[0] = b2x + vect[0]*(shift)/2;
-                            b2.coords[1] = b2y + vect[1]*(shift)/2;    
+                            b1.move(b1x - vect[0]*shift/2, b1y - vect[1]*shift/2);
+                            b2.move(b2x + vect[0]*shift/2, b2y + vect[1]*shift/2);
                         }
                     }
-                }
-            }
-
-            for(Ball b: balls){
-                double
-                br = b.getRadius(),
-                er = br + 0.1,
-                bx = b.coords[0],
-                by = b.coords[1];
-                if(bx - br < 0){
-                    shifted = true;
-                    b.relocate(er , by);
-                    b.coords[0] = er;
-                }
-                else if(bx + br > 800){
-                    shifted = true;
-                    b.relocate(800 - er , by);
-                    b.coords[0] = 800 - er;
-                }
-
-                if(by - br < 0 ){
-                    shifted = true;
-                    b.relocate(bx , er);
-                    b.coords[1] = er;
-                }
-                else if(by + br > 600){
-                    shifted = true;
-                    b.relocate(bx , 600 - er);
-                    b.coords[1] = 600 - er;
                 }
             }
         }
