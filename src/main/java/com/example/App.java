@@ -135,31 +135,31 @@ class CollisionHandler{
         while(shifted){
             shifted = false;
 
-            for(Ball b: balls){
-                double
-                br = b.r,
-                er = br + 0.1,
-                bx = b.x,
-                by = b.y;
+            // for(Ball b: balls){
+            //     double
+            //     br = b.r,
+            //     er = br + 0.1,
+            //     bx = b.x,
+            //     by = b.y;
 
-                if(bx - br < 0){
-                    shifted = true;
-                    b.move(er , by);
-                }
-                else if(bx + br > 800){
-                    shifted = true;
-                    b.move(800 - er , by);
-                }
+            //     if(bx - br < 0){
+            //         shifted = true;
+            //         b.move(er , by);
+            //     }
+            //     else if(bx + br > 800){
+            //         shifted = true;
+            //         b.move(800 - er , by);
+            //     }
 
-                if(by - br < 0 ){
-                    shifted = true;
-                    b.move(bx , er);
-                }
-                else if(by + br > 600){
-                    shifted = true;
-                    b.move(bx , 600 - er);
-                }
-            }
+            //     if(by - br < 0 ){
+            //         shifted = true;
+            //         b.move(bx , er);
+            //     }
+            //     else if(by + br > 600){
+            //         shifted = true;
+            //         b.move(bx , 600 - er);
+            //     }
+            // }
 
             for(int i = 0; i < balls.size() - 1; i++){
                 for(int j = i+1; j < balls.size(); j++){
